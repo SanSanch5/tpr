@@ -9,21 +9,24 @@ __author__ = 'alex'
 import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
+from sklearn import svm
 
 
 training_data_file = "data/ecoli_training_set.data"
 dataset_shape = (264, 7)
 
 print("Reading dataset...")
-data_dict = {}
+samples_names = []
+real_classes = []
 X = np.zeros(shape=dataset_shape)
 with open(training_data_file) as f:
     i = 0
     for line in f:
         line = line.rstrip('\n')
         attributes = line.split()
-        data_dict[attributes[0]] = attributes[1:]
-        X[i] = attributes[1:]
+        samples_names.append(attributes[0])
+        X[i] = attributes[1:-1]
+        real_classes.append(attributes[-1])
         i += 1
 
 print("Checking read values")
@@ -67,3 +70,42 @@ for k, col in zip(unique_labels, colors):
 plt.title('Estimated number of clusters: %d' % n_clusters_)
 plt.show()
 
+print("\nLearn SVM now")
+clf = svm.SVC()
+clf.fit(X, labels)
+print("SVM learned: ", clf)
+
+print("\nClassify test set")
+test_data_file = "data/ecoli_test_set.data"
+test_set_shape = (72, 7)
+
+# При чтении тестовой выборки сформирую вектор из реальных классов, потом промаплю его в полученные кластеры
+print("Reading test set...")
+test_X = np.zeros(shape=test_set_shape)
+with open(test_data_file) as f:
+    i = 0
+    for line in f:
+        line = line.rstrip('\n')
+        attributes = line.split()
+        samples_names.append(attributes[0])
+        test_X[i] = attributes[1:-1]
+        real_classes.append(attributes[-1])
+        i += 1
+
+print("Checking read values")
+assert len(X) == dataset_shape[0], "Incorrect read of test samples"
+assert len(X[0]) == dataset_shape[1], "Incorrect read of test features"
+
+print("Predict test set")
+test_Y = clf.predict(test_X)
+
+all_predicted = list(labels)
+all_predicted.extend(list(test_Y))
+
+output_file_name = "data/result.txt"
+with open(output_file_name, 'w') as f:
+    print("Sample name, predicted cluster's number and real class:", file=f)
+    for name, pred, real_class in zip(samples_names, all_predicted, real_classes):
+        print("%s\t%i\t%s" % (name, pred, real_class), file=f)
+
+print("The result has been written to file %s" % output_file_name)
