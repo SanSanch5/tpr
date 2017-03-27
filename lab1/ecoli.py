@@ -5,6 +5,34 @@ __author__ = 'alex'
 # и классифицировать оставшиеся 20%. Сравнить результаты с реальными данными.
 
 # содержание белка в различных компонентах организма
+# Attribute Information.
+#
+#   1.  Sequence Name: Accession number for the SWISS-PROT database
+#   2.  mcg: McGeoch's method for signal sequence recognition.
+#   3.  gvh: von Heijne's method for signal sequence recognition.
+#   4.  lip: von Heijne's Signal Peptidase II consensus sequence score.
+#            Binary attribute.
+#   5.  chg: Presence of charge on N-terminus of predicted lipoproteins.
+# 	   Binary attribute.
+#   6.  aac: score of discriminant analysis of the amino acid content of
+# 	   outer membrane and periplasmic proteins.
+#   7. alm1: score of the ALOM membrane spanning region prediction program.
+#   8. alm2: score of ALOM program after excluding putative cleavable signal
+# 	   regions from the sequence.
+#
+#
+# Class Distribution. The class is the localization site. Please see Nakai &
+# 		       Kanehisa referenced above for more details.
+#
+#  cp  (cytoplasm)                                    143
+#  im  (inner membrane without signal sequence)        77
+#  pp  (perisplasm)                                    52
+#  imU (inner membrane, uncleavable signal sequence)   35
+#  om  (outer membrane)                                20
+#  omL (outer membrane lipoprotein)                     5
+#  imL (inner membrane lipoprotein)                     2
+#  imS (inner membrane, cleavable signal sequence)      2
+
 
 import numpy as np
 from sklearn.cluster import DBSCAN
@@ -67,9 +95,6 @@ for k, col in zip(unique_labels, colors):
     plt.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
              markeredgecolor='k', markersize=6)
 
-plt.title('Estimated number of clusters: %d' % n_clusters_)
-plt.show()
-
 print("\nLearn SVM now")
 clf = svm.SVC()
 clf.fit(X, labels)
@@ -109,3 +134,6 @@ with open(output_file_name, 'w') as f:
         print("%s\t%i\t%s" % (name, pred, real_class), file=f)
 
 print("The result has been written to file %s" % output_file_name)
+
+plt.title('Estimated number of clusters: %d' % n_clusters_)
+plt.show()
