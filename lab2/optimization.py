@@ -43,28 +43,40 @@ attributes_values_count = [len(s) for s in attributes_values_sets]
 
 
 # try genetic algorithm ###########################
-bests_count = 100
+bests_percent, bests_min, bests_max = (10, 30, 500)
 iter_count = 1000
-mutations_for_attribute_percent = 20
+resets_count = 100
+mutations_count_percent = 60
 generation = all_attributes.copy()
 
 f_min = sys.float_info.max
+opt_values = []
+time_to_reset = int(iter_count / resets_count)
+time_to_reset_initial = int(iter_count / resets_count)
 for i in range(iter_count):
     f_vals = [f(*attributes) for attributes in generation]
+
+    bests_count = int(np.ceil(len(f_vals) * bests_percent / 100))
+    if bests_count < bests_min:
+        bests_count = bests_min
+    elif bests_count > bests_max:
+        bests_count = bests_max
+
     f_vals_bests_sorted = sorted(f_vals)[:bests_count]
-
-    # следующее поколение не должно давать результат хуже предыдущего
-    # assert f_vals_bests_sorted[0] <= f_min, "Smth went wrong; it: %i, current f_min is %f, prev f_min was %f" % (i, f_vals_bests_sorted[0], f_min)
-
-    # if f_min == f_vals_bests_sorted[0]:
-    #     break
 
     f_min = f_vals_bests_sorted[0]
 
     generation_bests = [generation[f_vals.index(best)] for best in f_vals_bests_sorted]
 
-    if i % 50 == 0:
+    if time_to_reset == 0:
         print("iter", i, ": min now is ", f_min, "attributes:", *generation_bests[0])
+        opt_values.append(f_min)
+        generation = all_attributes.copy()
+        time_to_reset = time_to_reset_initial
+    else:
+        generation = make_mutations(generation_bests, mutations_count_percent,
+                                    attributes_values_sets, attributes_values_count)
+    time_to_reset -= 1
 
-    generation = make_mutations(generation_bests, mutations_for_attribute_percent,
-                                attributes_values_sets, attributes_values_count)
+print(*opt_values)
+print("min value is", min(opt_values))
