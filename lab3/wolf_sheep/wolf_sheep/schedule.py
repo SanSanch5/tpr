@@ -77,3 +77,9 @@ class RandomActivationByBreed(RandomActivation):
         Returns the current number of agents of certain breed in the queue.
         '''
         return len(self.agents_by_breed[breed_class])
+
+    def get_breed_men_count(self, breed_class):
+        return len([obj for obj in self.agents_by_breed[breed_class] if obj.gender == "m"])
+
+    def get_breed_female_count(self, breed_class):
+        return len([obj for obj in self.agents_by_breed[breed_class] if obj.gender == "f"])

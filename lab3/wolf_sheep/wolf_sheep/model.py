@@ -27,23 +27,22 @@ class WolfSheepPredation(Model):
     verbose = False  # Print-monitoring
 
     def __init__(self, height=20, width=20,
-                 initial_sheep=130, initial_wolves=20,
-                 sheep_reproduce=0.04, wolf_reproduce=0.03,
-                 wolf_gain_from_food=30,
-                 grass=False, grass_regrowth_time=30, sheep_gain_from_food=4):
+                 initial_sheep=150, initial_wolves=10,
+                 sheep_reproduce=1, wolf_reproduce=40,
+                 wolf_gain_from_food=15,
+                 grass_regrowth_time=20, sheep_gain_from_food=4):
         '''
         Create a new Wolf-Sheep model with the given parameters.
 
         Args:
             initial_sheep: Number of sheep to start with
             initial_wolves: Number of wolves to start with
-            sheep_reproduce: Probability of each sheep reproducing each step
-            wolf_reproduce: Probability of each wolf reproducing each step
+            sheep_reproduce: Энергия для генерации новой овечки, забираемая у родителей 
+            wolf_reproduce: --//-- волчонка --//--
             wolf_gain_from_food: Energy a wolf gains from eating a sheep
-            grass: Whether to have the sheep eat grass for energy
             grass_regrowth_time: How long it takes for a grass patch to regrow
                                  once it is eaten
-            sheep_gain_from_food: Energy sheep gain from grass, if enabled.
+            sheep_gain_from_food: Energy sheep gain from grass
         '''
 
         # Set parameters
@@ -54,7 +53,6 @@ class WolfSheepPredation(Model):
         self.sheep_reproduce = sheep_reproduce
         self.wolf_reproduce = wolf_reproduce
         self.wolf_gain_from_food = wolf_gain_from_food
-        self.grass = grass
         self.grass_regrowth_time = grass_regrowth_time
         self.sheep_gain_from_food = sheep_gain_from_food
 
@@ -83,19 +81,18 @@ class WolfSheepPredation(Model):
             self.schedule.add(wolf)
 
         # Create grass patches
-        if self.grass:
-            for agent, x, y in self.grid.coord_iter():
+        for agent, x, y in self.grid.coord_iter():
 
-                fully_grown = random.choice([True, False])
+            fully_grown = random.choice([True, False])
 
-                if fully_grown:
-                    countdown = self.grass_regrowth_time
-                else:
-                    countdown = random.randrange(self.grass_regrowth_time)
+            if fully_grown:
+                countdown = self.grass_regrowth_time
+            else:
+                countdown = random.randrange(self.grass_regrowth_time)
 
-                patch = GrassPatch((x, y), self, fully_grown, countdown)
-                self.grid.place_agent(patch, (x, y))
-                self.schedule.add(patch)
+            patch = GrassPatch((x, y), self, fully_grown, countdown)
+            self.grid.place_agent(patch, (x, y))
+            self.schedule.add(patch)
 
         self.running = True
 

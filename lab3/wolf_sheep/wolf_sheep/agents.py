@@ -18,39 +18,42 @@ class Sheep(RandomWalker):
     def __init__(self, pos, model, moore, energy=None):
         super().__init__(pos, model, moore=moore)
         self.energy = energy
+        self.gender = random.choice(["m", "f"])
 
     def step(self):
         '''
         A model step. Move, then eat grass and reproduce.
         '''
         self.random_move()
-        living = True
 
-        if self.model.grass:
-            # Reduce energy
-            self.energy -= 1
+        # Reduce energy
+        self.energy -= 1
 
-            # If there is grass available, eat it
-            this_cell = self.model.grid.get_cell_list_contents([self.pos])
-            grass_patch = [obj for obj in this_cell
-                           if isinstance(obj, GrassPatch)][0]
-            if grass_patch.fully_grown:
-                self.energy += self.model.sheep_gain_from_food
-                grass_patch.fully_grown = False
+        # If there is grass available, eat it
+        this_cell = self.model.grid.get_cell_list_contents([self.pos])
+        grass_patch = [obj for obj in this_cell
+                       if isinstance(obj, GrassPatch)][0]
+        if grass_patch.fully_grown:
+            self.energy += self.model.sheep_gain_from_food
+            grass_patch.fully_grown = False
 
-            # Death
-            if self.energy < 0:
-                self.model.grid._remove_agent(self.pos, self)
-                self.model.schedule.remove(self)
-                living = False
-
-        if living and random.random() < self.model.sheep_reproduce:
-            # Create a new sheep:
-            if self.model.grass:
-                self.energy /= 2
-            lamb = Sheep(self.pos, self.model, self.moore, self.energy)
-            self.model.grid.place_agent(lamb, self.pos)
-            self.model.schedule.add(lamb)
+        # Death
+        if self.energy < 0:
+            self.model.grid._remove_agent(self.pos, self)
+            self.model.schedule.remove(self)
+        elif self.energy >= self.model.sheep_reproduce:
+            another_sheeps = [obj for obj in this_cell
+                             if isinstance(obj, Sheep) and
+                             obj.gender != self.gender and
+                             obj.energy >= self.model.sheep_reproduce]
+            if len(another_sheeps) > 0:
+                another_sheep = random.choice(another_sheeps)
+                # Create a new sheep:
+                self.energy -= self.model.sheep_reproduce
+                another_sheep.energy -= self.model.sheep_reproduce
+                lamb = Sheep(self.pos, self.model, self.moore, random.randrange(2 * self.model.sheep_gain_from_food))
+                self.model.grid.place_agent(lamb, self.pos)
+                self.model.schedule.add(lamb)
 
 
 class Wolf(RandomWalker):
@@ -64,6 +67,7 @@ class Wolf(RandomWalker):
     def __init__(self, pos, model, moore, energy=None):
         super().__init__(pos, model, moore=moore)
         self.energy = energy
+        self.gender = random.choice(["m", "f"])
 
     def step(self):
         self.random_move()
@@ -85,11 +89,17 @@ class Wolf(RandomWalker):
         if self.energy < 0:
             self.model.grid._remove_agent(self.pos, self)
             self.model.schedule.remove(self)
-        else:
-            if random.random() < self.model.wolf_reproduce:
+        elif self.energy >= self.model.wolf_reproduce:
+            another_wolves = [obj for obj in this_cell
+                              if isinstance(obj, Wolf) and
+                              obj.gender != self.gender and
+                              obj.energy >= self.model.sheep_reproduce]
+            if len(another_wolves) > 0:
+                another_wolf = random.choice(another_wolves)
                 # Create a new wolf cub
-                self.energy /= 2
-                cub = Wolf(self.pos, self.model, self.moore, self.energy)
+                self.energy -= self.model.wolf_reproduce
+                another_wolf.energy -= self.model.wolf_reproduce
+                cub = Wolf(self.pos, self.model, self.moore, random.randrange(2 * self.model.wolf_gain_from_food))
                 self.model.grid.place_agent(cub, cub.pos)
                 self.model.schedule.add(cub)
 

@@ -1,5 +1,5 @@
 from mesa.visualization.ModularVisualization import ModularServer
-from mesa.visualization.modules import CanvasGrid, ChartModule
+from mesa.visualization.modules import CanvasGrid, ChartModule, TextElement
 
 from wolf_sheep.agents import Wolf, Sheep, GrassPatch
 from wolf_sheep.model import WolfSheepPredation
@@ -19,7 +19,7 @@ def wolf_sheep_portrayal(agent):
         # portrayal["Shape"] = "sheep.png"
         portrayal["Shape"] = "circle"
         portrayal["r"] = 0.7
-        portrayal["Color"] = "Red"
+        portrayal["Color"] = "Blue" if agent.gender == "m" else "Red"
         # https://icons8.com/web-app/433/sheep
         # portrayal["scale"] = 0.9
         portrayal["Layer"] = 1
@@ -33,9 +33,10 @@ def wolf_sheep_portrayal(agent):
             portrayal["text_color"] = "Black"
 
     elif type(agent) is Wolf:
-        portrayal["Shape"] = "circle"
-        portrayal["r"] = 1
-        portrayal["Color"] = "Blue"
+        portrayal["Shape"] = "rect"
+        portrayal["h"] = 0.7
+        portrayal["w"] = 0.7
+        portrayal["Color"] = "Blue" if agent.gender == "m" else "Red"
         # portrayal["Shape"] = "wolf.png"
         # https://icons8.com/web-app/36821/German-Shepherd
         # portrayal["scale"] = 0.9
@@ -58,15 +59,31 @@ def wolf_sheep_portrayal(agent):
         portrayal["Layer"] = 0
         # portrayal["text"] = agent.countdown
         # portrayal["text_color"] = "Black"
-        portrayal["w"] = 3
-        portrayal["h"] = 3
+        portrayal["w"] = 1
+        portrayal["h"] = 1
 
     return portrayal
 
+
+class AnimalsCount(TextElement):
+    '''
+    Display a text count of how many happy agents there are.
+    '''
+    def __init__(self):
+        pass
+
+    def render(self, model):
+        wolves_m = model.schedule.get_breed_men_count(Wolf)
+        sheep_m = model.schedule.get_breed_men_count(Sheep)
+        wolves_f = model.schedule.get_breed_female_count(Wolf)
+        sheep_f = model.schedule.get_breed_female_count(Sheep)
+        return "Волки: %d Волчихи: %d Бараны: %d Овечки: %d" % (wolves_m, wolves_f, sheep_m, sheep_f)
+
 canvas_element = CanvasGrid(wolf_sheep_portrayal, 20, 20, 800, 800)
+text_element = AnimalsCount()
 chart_element = ChartModule([{"Label": "Wolves", "Color": "#AA0000"},
                              {"Label": "Sheep", "Color": "#666666"}])
 
-server = ModularServer(WolfSheepPredation, [canvas_element, chart_element],
-                       "Волки и овцы", grass=True)
+server = ModularServer(WolfSheepPredation, [text_element, canvas_element, chart_element],
+                       "Волки и овцы")
 # server.launch()
